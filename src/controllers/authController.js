@@ -68,6 +68,7 @@ export const registerTeacher = async (req, res) => {
 export const loginUser = async (req, res) => {
   try {
     const { email, password, role } = req.body;
+    console.log("Login Data:", req.body); // Debugging line
 
     let user;
     if (role === "student") {
