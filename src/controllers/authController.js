@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import Student from "../models/Student.js";
 import Teacher from "../models/Teacher.js";
+//authController
 
 // Register a new student
 export const registerStudent = async (req, res) => {
@@ -70,7 +71,7 @@ export const loginUser = async (req, res) => {
     const { email, password, role } = req.body;
     console.log("Login Data:", req.body); // Debugging line
 
-    let user;
+    let user;// Declare user variable
     if (role === "student") {
       user = await Student.findOne({ email });
     } else if (role === "teacher") {
@@ -81,18 +82,23 @@ export const loginUser = async (req, res) => {
       });
     }
 
-    if (!user)
-      return res.status(404).json({
-        msg: "User not found",
-      });
+   
+    // Log the entire user object to check for the password field
+    console.log("User from database:", user);
 
+    // Check if the password field exists in the user object
+    if (!user.password) {
+      return res.status(400).json({
+        msg: "Password not found",
+      });
+    }
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(400).json({
         msg: "Invalid credentials",
       });
-      
+
     // Generate JWT token
     const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
       expiresIn: "7d",
