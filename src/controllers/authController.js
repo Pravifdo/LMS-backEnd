@@ -39,8 +39,8 @@ export const registerStudent = async (req, res) => {
 // Register a new teacher
 export const registerTeacher = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
-
+    const { name, email, password,subject  } = req.body;
+    console.log("Received Data:", req.body);
     // Check if user already exists
     let existingTeacher = await Teacher.findOne({ email });
 
@@ -54,10 +54,11 @@ export const registerTeacher = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create new teacher
-    const newTeacher = new Teacher({ name, email, password: hashedPassword });
+    const newTeacher = new Teacher({ name, email, password: hashedPassword,subject  });
     await newTeacher.save();
 
-    res.status(201).json({ msg: "Teacher registered successfully" });
+    res.status(201).json({
+       msg: "Teacher registered successfully" });
   } catch (error) {
     res
       .status(500)
@@ -65,49 +66,60 @@ export const registerTeacher = async (req, res) => {
   }
 };
 
-// User login (Student or Teacher)
+
+// Login for student or teacher
 export const loginUser = async (req, res) => {
   try {
     const { email, password, role } = req.body;
-    console.log("Login Data:", req.body); // Debugging line
+    console.log("Login Data:", req.body);
 
-    let user;// Declare user variable
+    let user;
+
     if (role === "student") {
       user = await Student.findOne({ email });
     } else if (role === "teacher") {
       user = await Teacher.findOne({ email });
     } else {
-      return res.status(400).json({
-        msg: "Invalid role",
-      });
+      return res.status(400).json({ msg: "Invalid role" });
     }
 
-   
-    // Log the entire user object to check for the password field
-    console.log("User from database:", user);
+    // Check if user exists
+    if (!user) {
+      return res.status(400).json({ msg: "User not found" });
+    }
 
-    // Check if the password field exists in the user object
+    // Check if password exists in user
     if (!user.password) {
-      return res.status(400).json({
-        msg: "Password not found",
-      });
+      return res.status(400).json({ msg: "Password not found" });
     }
+
     // Compare passwords
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(400).json({
-        msg: "Invalid credentials",
-      });
+    if (!isMatch) {
+      return res.status(400).json({ msg: "Invalid credentials" });
+    }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id, role }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // Generate JWT
+    const token = jwt.sign(
+      { id: user._id, role },
+      process.env.JWT_SECRET || 'your_jwt_secret',
+      { expiresIn: "7d" }
+    );
 
+    // Respond with user details (omit password)
     res.status(200).json({
       msg: "Login successful",
       token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role,
+        ...(role === "teacher" && { subject: user.subject }),
+        ...(role === "student" && { course: user.course }),
+      },
     });
+
   } catch (error) {
     res.status(500).json({
       msg: "Error logging in",
