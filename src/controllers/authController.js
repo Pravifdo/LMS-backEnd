@@ -67,7 +67,7 @@ export const registerTeacher = async (req, res) => {
 };
 
 
-// Login for student or teacher
+
 export const loginUser = async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -75,38 +75,49 @@ export const loginUser = async (req, res) => {
 
     let user;
 
+    // 🧑‍🎓 Student or 👨‍🏫 Teacher lookup
     if (role === "student") {
       user = await Student.findOne({ email });
     } else if (role === "teacher") {
-      user = await Teacher.findOne({ email });
+      user = await Teacher.findOne({ email }).populate("courses");
     } else {
       return res.status(400).json({ msg: "Invalid role" });
     }
 
-    // Check if user exists
+    // 🚫 No user found
     if (!user) {
       return res.status(400).json({ msg: "User not found" });
     }
 
-    // Check if password exists in user
+    // 🚫 No password
     if (!user.password) {
       return res.status(400).json({ msg: "Password not found" });
     }
 
-    // Compare passwords
+    // 🔐 Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ msg: "Invalid credentials" });
     }
 
-    // Generate JWT
+    // 🔑 Generate JWT token
     const token = jwt.sign(
       { id: user._id, role },
-      process.env.JWT_SECRET || 'your_jwt_secret',
+      process.env.JWT_SECRET || "default_secret_key",
       { expiresIn: "7d" }
     );
 
-    // Respond with user details (omit password)
+    // ✅ Check if teacher has course matching subject
+    let hasCourse = false;
+    if (role === "teacher" && user.subject?.name) {
+      const subjectCourse = await Course.findOne({
+        instructor: user._id,
+        title: user.subject.name,
+      });
+      hasCourse = !!subjectCourse;
+    }
+
+    // ✅ Success response
     res.status(200).json({
       msg: "Login successful",
       token,
@@ -115,12 +126,19 @@ export const loginUser = async (req, res) => {
         name: user.name,
         email: user.email,
         role,
-        ...(role === "teacher" && { subject: user.subject }),
-        ...(role === "student" && { course: user.course }),
+        ...(role === "teacher" && {
+          subject: user.subject,         // { name: "Maths", code: "MATH101" }
+          courses: user.courses || [],
+          hasCourse,
+        }),
+        ...(role === "student" && {
+          course: user.course || [],
+        }),
       },
     });
 
   } catch (error) {
+    console.error("Login error:", error);
     res.status(500).json({
       msg: "Error logging in",
       error: error.message,

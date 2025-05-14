@@ -1,28 +1,41 @@
 import mongoose from "mongoose";
 
 const courseSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true
-    },
-    description: {
-        type: String,
-        required: true
-    },
-    instructor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User", // this is used to store the id of the user
-        required: true
-    },
-    lessons: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Lesson" // this is used to store the id of the lesson
-    }],
-    students: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User" // this is used to store the id of the user
-    }]
-});
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
 
-// ✅ Use the correct variable name (courseSchema)
-export default mongoose.model("Course", courseSchema);
+  description: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+
+  instructor: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Teacher", // Link to Teacher model
+    required: true,
+  },
+
+  lessons: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Lesson", // Optional: if you have lesson documents
+  }],
+
+  students: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Student", // Link to Student model
+  }],
+  
+  materials: {
+    pdf: { type: String },           // PDF file link
+    notes: [{ type: String }],       // Array of notes
+    assignments: [{ type: String }]  // Array of assignments
+  }
+
+}, { timestamps: true });
+
+const Course = mongoose.model("Course", courseSchema);
+export default Course;

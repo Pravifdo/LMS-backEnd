@@ -16,16 +16,27 @@ const teacherSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+
+  // Subject with name and code
   subject: {
-    type: String,
-    required: true,
+    name: {
+      type: String,
+      required: true,
+    },
+    code: {
+      type: String,
+      required: true,
+    },
   },
+
+  // Linked Course documents
   courses: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course", // Reference to Course model
     },
   ],
+
   role: {
     type: String,
     default: "teacher",
