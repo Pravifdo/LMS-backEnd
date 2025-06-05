@@ -16,21 +16,43 @@ export const getAllCourses = async (req,res)=>{
     }
 };
 
-//Create a new course
-export const createCourse = async(req,res) =>{
-    try {
-        const newCourse = new Course(req.body);
+//Create a course
+//post /api/v1/courses/create(only for teachers)
+export const createCourse = async(req,res)=>{
+    try{
+        const {title,description,teacherId} = req.body;
+
+        // 🧑‍🏫 Find the teacher
+        const teacher = await Teacher.findById(teacherId);
+        if(!teacher){
+            return res.status(404).json({
+                msg:"Teacher not found"
+            });
+        }
+
+        // 📚 Create new course
+        const newCourse = new Course({
+            title,
+            description,
+            instructor: teacher._id, // Link to the teacher
+        });
         await newCourse.save();
-        console.log(newCourse);
-        
-    } catch (error) {
+
+        // 🔗 Add course to teacher's courses
+        teacher.courses.push(newCourse._id);
+        await teacher.save();
+
+        res.status(201).json({
+            msg:"Course created",
+            data:newCourse
+        });
+    }catch(error){
         res.status(500).json({
             msg:"Internal server error",
             error:error.message
         });
     }
-};
-
+}
 
 
 //Update a course

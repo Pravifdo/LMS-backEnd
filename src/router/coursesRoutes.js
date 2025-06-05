@@ -6,7 +6,7 @@ const coursesRouter = Router();
 // Define a route for fetching all courses
 coursesRouter.get("/getAllCourses", getAllCourses);
 coursesRouter.get("/courses/:id", getCourseByCode);
-coursesRouter.post("/createCourse", createCourse);
+coursesRouter.post("/courses/create", createCourse);
 coursesRouter.put("/updateCourse/:id", updateCourse);
 coursesRouter.delete("/deleteCourse/:id", deleteCourse);
 
