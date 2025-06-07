@@ -82,23 +82,31 @@ export const loginUser = async (req, res) => {
     } else if (role === "teacher") {
       user = await Teacher.findOne({ email }).populate("courses");
     } else {
-      return res.status(400).json({ msg: "Invalid role" });
+      return res.status(400).json({
+         msg: "Invalid role" 
+        });
     }
 
     // 🚫 No user found
     if (!user) {
-      return res.status(400).json({ msg: "User not found" });
+      return res.status(400).json({ 
+        msg: "User not found" 
+      });
     }
 
     // 🚫 No password
     if (!user.password) {
-      return res.status(400).json({ msg: "Password not found" });
+      return res.status(400).json({
+         msg: "Password not found" 
+        });
     }
 
     // 🔐 Compare password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ msg: "Invalid credentials" });
+      return res.status(400).json({ 
+        msg: "Invalid credentials" 
+      });
     }
 
     // 🔑 Generate JWT token
@@ -110,12 +118,14 @@ export const loginUser = async (req, res) => {
 
     // ✅ Check if teacher has course matching subject
     let hasCourse = false;
+    let firstCourse = null;
     if (role === "teacher" && user.subject?.name) {
       const subjectCourse = await Course.findOne({
         instructor: user._id,
         title: user.subject.name,
       });
       hasCourse = !!subjectCourse;
+      firstCourse = subjectCourse;
     }
 
     // ✅ Success response
